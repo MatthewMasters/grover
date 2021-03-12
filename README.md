@@ -179,17 +179,17 @@ The pretrained model can be used to generate atom and bond-level embeddings.
   b) paths to PDB, Mol2, or SDF files
 2. Extract the necessary molecular features using the following command:
 ```
-python save_features.py --data_path my_molecules.csv \
-			--save_path my_molecules.npz \
-			--features_generator rdkit_2d_normalized \
-			--restart
+python scripts/save_features.py --data_path my_molecules.csv \
+				--save_path my_molecules.npz \
+				--features_generator rdkit_2d_normalized \
+				--restart
 ```
 3. Generate the atom & bond embeddings:
 ```
-python generate_embeddings.py  --data_path my_molecules.csv \
-			       --features_path my_molecules.npz \ 
-			       --checkpoint_path pretrained/grover_base.pt \
-			       --output my_molecule_embeddings
+python main.py embedding --data_path my_molecules.csv \
+			 --features_path my_molecules.npz \ 
+			 --checkpoint_path pretrained/grover_base.pt \
+			 --output my_molecule_embeddings
 ```
 
 ## The Results
