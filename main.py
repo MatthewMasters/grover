@@ -1,4 +1,5 @@
 import random
+from argparse import Namespace
 
 import numpy as np
 import torch
@@ -10,6 +11,7 @@ from task.cross_validate import cross_validate
 from task.fingerprint import generate_fingerprints
 from task.predict import make_predictions, write_prediction
 from task.pretrain import pretrain_model
+from task.embedding import generate_embeddings
 from grover.data.torchvocab import MolVocab
 
 
@@ -47,8 +49,18 @@ if __name__ == '__main__':
     elif args.parser_name == 'fingerprint':
         train_args = get_newest_train_args()
         logger = create_logger(name='fingerprint', save_dir=None, quiet=False)
-        feas = generate_fingerprints(args, logger)
+        train_args = train_args.__dict__
+        train_args.update(args.__dict__)
+        train_args = Namespace(**train_args)
+        feas = generate_fingerprints(train_args, logger)
         np.savez_compressed(args.output_path, fps=feas)
+    elif args.parser_name == 'embedding':
+        train_args = get_newest_train_args()
+        logger = create_logger(name='fingerprint', save_dir=None, quiet=False)
+        train_args = train_args.__dict__
+        train_args.update(args.__dict__)
+        train_args = Namespace(**train_args)
+        generate_embeddings(train_args, logger)
     elif args.parser_name == 'predict':
         train_args = get_newest_train_args()
         avg_preds, test_smiles = make_predictions(args, train_args)

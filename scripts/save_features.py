@@ -51,7 +51,7 @@ def generate_and_save_features(args: Namespace):
     makedirs(args.save_path, isfile=True)
 
     # Get data and features function
-    data = get_data(path=args.data_path, max_data_size=None)
+    data = get_data(path=args.data_path, max_data_size=None, use_compound_names=True, skip_invalid_smiles=False)
     features_generator = get_features_generator(args.features_generator)
     temp_save_dir = args.save_path + '_temp'
 

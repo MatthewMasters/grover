@@ -18,10 +18,11 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 from torch import nn as nn
 from tqdm import tqdm as core_tqdm
 
-from grover.data import MoleculeDatapoint, MoleculeDataset, StandardScaler
-from grover.model.models import GroverFpGeneration, GroverFinetuneTask
+from grover.data.moldataset import MoleculeDatapoint, MoleculeDataset, StandardScaler
+from grover.model.models import GroverFpGeneration, GroverFinetuneTask, GroverEmbeddingWrapper
 from grover.util.nn_utils import initialize_weights
 from grover.util.scheduler import NoamLR
+from grover.util.loader import load_mol
 
 
 def get_model_args():
@@ -165,7 +166,7 @@ def get_data(path: str,
         max_data_size = max_data_size if max_data_size is not None else args.max_data_size
         use_compound_names = use_compound_names if use_compound_names is not None else args.use_compound_names
     else:
-        use_compound_names = False
+        use_compound_names = use_compound_names if use_compound_names is not None else False
 
     max_data_size = max_data_size or float('inf')
 
@@ -391,7 +392,7 @@ def generate_scaffold(mol: Union[str, Chem.Mol], include_chirality: bool = False
     :param include_chirality: Whether to include chirality.
     :return:
     """
-    mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
+    mol = load_mol(mol) if type(mol) == str else mol
     scaffold = MurckoScaffold.MurckoScaffoldSmiles(mol=mol, includeChirality=include_chirality)
 
     return scaffold
@@ -780,13 +781,16 @@ def build_model(args: Namespace, model_idx=0):
     :param args: Arguments.
     :return: A MPNN containing the MPN encoder along with final linear layers with parameters initialized.
     """
+
     if hasattr(args, 'num_tasks'):
         args.output_size = args.num_tasks
     else:
         args.output_size = 1
 
-    if args.parser_name == "fingerprint":
+    if args.parser_name == 'fingerprint':
         model = GroverFpGeneration(args)
+    elif args.parser_name == 'embedding':
+        return GroverEmbeddingWrapper(args)
     else:
         # finetune and evaluation case.
         model = GroverFinetuneTask(args)

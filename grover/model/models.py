@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch import nn as nn
 
-from grover.data import get_atom_fdim, get_bond_fdim
+from grover.data.molgraph import get_atom_fdim, get_bond_fdim
 from grover.model.layers import Readout, GTransEncoder
 from grover.util.nn_utils import get_activation_function
 
@@ -181,6 +181,16 @@ class FunctionalGroupPrediction(nn.Module):
 
         return {"atom_from_atom": preds_atom_from_atom, "atom_from_bond": preds_atom_from_bond,
                 "bond_from_atom": preds_bond_from_atom, "bond_from_bond": preds_bond_from_bond}
+
+
+class GroverEmbeddingWrapper(nn.Module):
+    """Model to load pretrained weights for atom/bond embedding"""
+    def __init__(self, args):
+        super(GroverEmbeddingWrapper, self).__init__()
+        self.grover = GROVEREmbedding(args)
+
+    def forward(self, batch):
+        return self.grover(batch)
 
 
 class GroverTask(nn.Module):

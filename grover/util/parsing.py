@@ -64,6 +64,16 @@ def add_fingerprint_args(parser):
     parser.add_argument('--checkpoint_path', type=str, help='model path')
 
 
+def add_embedding_args(parser):
+    add_common_args(parser)
+    # parameters for fingerprints generation
+    parser.add_argument('--data_path', type=str, help='Input csv file which contains molecules')
+    parser.add_argument('--output_path', type=str, help='Path to folder where predictions will be saved')
+    parser.add_argument('--features_path', type=str, nargs='*',
+                        help='Path to features to use in FNN (instead of features_generator)')
+    parser.add_argument('--checkpoint_path', type=str, help='model path')
+
+
 def add_finetune_args(parser: ArgumentParser):
     """
     Adds training arguments to an ArgumentParser.
@@ -322,8 +332,6 @@ def update_checkpoint_args(args: Namespace):
 
     args.ensemble_size = len(args.checkpoint_paths)
 
-
-
     if args.ensemble_size == 0:
         raise ValueError(f'Failed to find any model checkpoints in directory "{args.checkpoint_dir}"')
 
@@ -353,12 +361,23 @@ def modify_fingerprint_args(args):
     assert args.output_path
     assert args.checkpoint_path is not None or args.checkpoint_paths is not None
 
-
     update_checkpoint_args(args)
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     del args.no_cuda
     makedirs(args.output_path, isfile=True)
     setattr(args, 'fingerprint', True)
+
+
+def modify_embedding_args(args):
+    assert args.data_path
+    assert args.output_path
+    assert args.checkpoint_path is not None or args.checkpoint_paths is not None
+
+    update_checkpoint_args(args)
+    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    del args.no_cuda
+    makedirs(args.output_path, isfile=True)
+    setattr(args, 'embedding', True)
 
 
 def get_newest_train_args():
@@ -470,6 +489,8 @@ def parse_args() -> Namespace:
     add_predict_args(parser_predict)
     parser_fp = subparser.add_parser('fingerprint', help="Get the fingerprints of SMILES.")
     add_fingerprint_args(parser_fp)
+    parser_emb = subparser.add_parser('embedding', help="Get the atom and bond embeddings")
+    add_embedding_args(parser_emb)
     parser_pretrain = subparser.add_parser('pretrain', help="Pretrain with unlabelled SMILES.")
     add_pretrain_args(parser_pretrain)
 
@@ -483,5 +504,7 @@ def parse_args() -> Namespace:
         modify_predict_args(args)
     elif args.parser_name == 'fingerprint':
         modify_fingerprint_args(args)
+    elif args.parser_name == 'embedding':
+        modify_embedding_args(args)
 
     return args

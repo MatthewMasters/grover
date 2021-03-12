@@ -10,6 +10,8 @@ import numpy as np
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 
+from grover.util.loader import load_mol
+
 Molecule = Union[str, Chem.Mol]
 FeaturesGenerator = Callable[[Molecule], np.ndarray]
 FEATURES_GENERATOR_REGISTRY = {}
@@ -64,7 +66,7 @@ def morgan_binary_features_generator(mol: Molecule,
     :param num_bits: Number of bits in Morgan fingerprint.
     :return: A 1-D numpy array containing the binary Morgan fingerprint.
     """
-    mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
+    mol = load_mol(mol) if type(mol) == str else mol
     features_vec = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=num_bits)
     features = np.zeros((1,))
     DataStructs.ConvertToNumpyArray(features_vec, features)
@@ -84,7 +86,7 @@ def morgan_counts_features_generator(mol: Molecule,
     :param num_bits: Number of bits in Morgan fingerprint.
     :return: A 1D numpy array containing the counts-based Morgan fingerprint.
     """
-    mol = Chem.MolFromSmiles(mol) if type(mol) == str else mol
+    mol = load_mol(mol) if type(mol) == str else mol
     features_vec = AllChem.GetHashedMorganFingerprint(mol, radius, nBits=num_bits)
     features = np.zeros((1,))
     DataStructs.ConvertToNumpyArray(features_vec, features)
@@ -103,10 +105,10 @@ try:
         :param mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
         :return: A 1D numpy array containing the RDKit 2D features.
         """
-        smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
+        mol = load_mol(mol) if type(mol) == str else mol
+        smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
         generator = rdDescriptors.RDKit2D()
         features = generator.process(smiles)[1:]
-
         return features
 
     @register_features_generator('rdkit_2d_normalized')
@@ -117,7 +119,8 @@ try:
         :param mol: A molecule (i.e. either a SMILES string or an RDKit molecule).
         :return: A 1D numpy array containing the RDKit 2D normalized features.
         """
-        smiles = Chem.MolToSmiles(mol, isomericSmiles=True) if type(mol) != str else mol
+        mol = load_mol(mol) if type(mol) == str else mol
+        smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
         generator = rdNormalizedDescriptors.RDKit2DNormalized()
         features = generator.process(smiles)[1:]
         return features

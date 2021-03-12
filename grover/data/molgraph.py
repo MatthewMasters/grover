@@ -10,6 +10,8 @@ import numpy as np
 import torch
 from rdkit import Chem
 
+from grover.util.loader import load_mol
+
 # Atom feature sizes
 MAX_ATOMIC_NUM = 100
 
@@ -71,8 +73,6 @@ def onek_encoding_unk(value: int, choices: List[int]) -> List[int]:
     return encoding
 
 
-
-
 class MolGraph:
     """
     A MolGraph represents the graph structure and featurization of a single molecule.
@@ -88,7 +88,7 @@ class MolGraph:
     - b2revb: A mapping from a bond index to the index of the reverse bond.
     """
 
-    def __init__(self, smiles: str,  args: Namespace):
+    def __init__(self, smiles, args: Namespace):
         """
         Computes the graph structure and featurization of a molecule.
 
@@ -105,8 +105,7 @@ class MolGraph:
         self.b2a = []  # mapping from bond index to the index of the atom the bond is coming from
         self.b2revb = []  # mapping from bond index to the index of the reverse bond
 
-        # Convert smiles to molecule
-        mol = Chem.MolFromSmiles(smiles)
+        mol = load_mol(smiles)
 
         self.hydrogen_donor = Chem.MolFromSmarts("[$([N;!H0;v3,v4&+1]),$([O,S;H1;+0]),n&H1&+0]")
         self.hydrogen_acceptor = Chem.MolFromSmarts(
@@ -122,7 +121,6 @@ class MolGraph:
         self.acidic_match = sum(mol.GetSubstructMatches(self.acidic), ())
         self.basic_match = sum(mol.GetSubstructMatches(self.basic), ())
         self.ring_info = mol.GetRingInfo()
-
 
         # fake the number of "atoms" if we are collapsing substructures
         self.n_atoms = mol.GetNumAtoms()
